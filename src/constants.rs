@@ -85,7 +85,7 @@ pub const ENCORE_NETWORK: &str = "tibePmPaoTgrs929rWpu755EXaxC7M3SthVCf6GzjZt";
 
 pub const LOOKING_GLASS_EMOJI: Emoji<'_, '_> = Emoji("🔍 ", "");
 
-pub const CANDY_EMOJI: Emoji<'_, '_> = Emoji("🍬 ", "");
+pub const TARS_EMOJI: Emoji<'_, '_> = Emoji("🍬 ", "");
 
 pub const COMPUTER_EMOJI: Emoji<'_, '_> = Emoji("🖥  ", "");
 

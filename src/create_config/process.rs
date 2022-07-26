@@ -14,13 +14,13 @@ use dialoguer::{Confirm, Input, MultiSelect, Select};
 use url::Url;
 
 use crate::{
-    candy_machine::CANDY_MACHINE_ID,
+    tars::TARS_ID,
     config::{
         parse_string_as_date, ConfigData, Creator, EndSettingType, EndSettings, GatekeeperConfig,
         HiddenSettings, UploadMethod, WhitelistMintMode, WhitelistMintSettings,
     },
     constants::*,
-    setup::{setup_client, sugar_setup},
+    setup::{setup_client, case_setup},
     upload::list_files,
     utils::{check_spl_token, check_spl_token_account, get_dialoguer_theme},
     validate::Metadata,
@@ -120,9 +120,9 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
     };
 
     println!(
-        "{} {}Sugar interactive config maker",
+        "{} {}Case interactive config maker",
         style("[1/2]").bold().dim(),
-        CANDY_EMOJI
+        TARS_EMOJI
     );
 
     // checks if we have an assets dir and count the number of files
@@ -159,10 +159,10 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
         }
     }
 
-    println!("\nCheck out our Candy Machine config docs to learn about the options:");
+    println!("\nCheck out our Tars config docs to learn about the options:");
     println!(
         "  -> {}\n",
-        style("https://docs.metaplex.com/tools/sugar/configuration")
+        style("https://docs.metaplex.com/tools/case/configuration")
             .bold()
             .magenta()
             .underlined()
@@ -183,14 +183,14 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
     config_data.number = if num_files > 0 && (num_files % 2) == 0 && Confirm::with_theme(&theme)
         .with_prompt(
             format!(
-                "Found {} file pairs in \"{}\". Is this how many NFTs you will have in your candy machine?", num_files / 2, args.assets_dir,
+                "Found {} file pairs in \"{}\". Is this how many NFTs you will have in your tars?", num_files / 2, args.assets_dir,
             )
         )
         .interact()? {
         (num_files / 2) as u64
     } else {
         Input::with_theme(&theme)
-            .with_prompt("How many NFTs will you have in your candy machine?")
+            .with_prompt("How many NFTs will you have in your tars?")
             .validate_with(number_validator)
             .interact()
             .unwrap().parse::<u64>().expect("Failed to parse number into u64 that should have already been validated.")
@@ -349,9 +349,9 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
 
     // SPL token mint
 
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
-    let client = Arc::new(setup_client(&sugar_config)?);
-    let program = client.program(CANDY_MACHINE_ID);
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
+    let client = Arc::new(setup_client(&case_config)?);
+    let program = client.program(TARS_ID);
 
     if choices.contains(&SPL_INDEX) {
         config_data.sol_treasury_account = None;
@@ -404,7 +404,7 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
         let civic_network = Pubkey::from_str(CIVIC_NETWORK).unwrap();
         let encore_network = Pubkey::from_str(ENCORE_NETWORK).unwrap();
         let selection = Select::with_theme(&theme)
-            .with_prompt("Which gatekeeper network do you want to use? Check https://docs.metaplex.com/guides/archived/candy-machine-v2/configuration#provider-networks for more info.")
+            .with_prompt("Which gatekeeper network do you want to use? Check https://docs.metaplex.com/guides/archived/tars- -v2/configuration#provider-networks for more info.")
             .items(&gatekeeper_options)
             .default(0)
             .interact()?;
@@ -499,7 +499,7 @@ pub fn process_create_config(args: CreateConfigArgs) -> Result<()> {
                     if num.parse::<u64>().unwrap() < config_data.number {
                         Ok(())
                     } else {
-                        Err("Your end settings amount cannot be more than the number of items in your candy machine.")
+                        Err("Your end settings amount cannot be more than the number of items in your tars.")
                     }
                 })
                 .interact()

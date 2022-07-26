@@ -26,7 +26,7 @@ pub struct LaunchArgs {
 }
 
 pub async fn process_launch(args: LaunchArgs) -> Result<()> {
-    println!("Starting Sugar launch... {}", LAUNCH_EMOJI);
+    println!("Starting Case launch... {}", LAUNCH_EMOJI);
 
     let theme = ColorfulTheme {
         prompt_style: Style::new(),
@@ -40,7 +40,7 @@ pub async fn process_launch(args: LaunchArgs) -> Result<()> {
             .with_prompt("Could not load config file. Would you like to create a new config file?")
             .interact()?
         {
-            println!("\n{} sugar create-config\n", style(">>>").magenta());
+            println!("\n{} case create-config\n", style(">>>").magenta());
 
             let create_config_args = CreateConfigArgs {
                 config: Some(args.config.clone()),
@@ -55,7 +55,7 @@ pub async fn process_launch(args: LaunchArgs) -> Result<()> {
         }
     }
 
-    println!("\n{} sugar validate\n", style(">>>").magenta());
+    println!("\n{} case validate\n", style(">>>").magenta());
 
     let validate_args = ValidateArgs {
         assets_dir: args.assets_dir.clone(),
@@ -65,7 +65,7 @@ pub async fn process_launch(args: LaunchArgs) -> Result<()> {
 
     process_validate(validate_args)?;
 
-    println!("\n{} sugar upload\n", style(">>>").magenta());
+    println!("\n{} case upload\n", style(">>>").magenta());
 
     let upload_args = UploadArgs {
         assets_dir: args.assets_dir.clone(),
@@ -78,7 +78,7 @@ pub async fn process_launch(args: LaunchArgs) -> Result<()> {
 
     process_upload(upload_args).await?;
 
-    println!("\n{} sugar deploy\n", style(">>>").magenta());
+    println!("\n{} case deploy\n", style(">>>").magenta());
 
     let deploy_args = DeployArgs {
         config: args.config.clone(),
@@ -90,7 +90,7 @@ pub async fn process_launch(args: LaunchArgs) -> Result<()> {
 
     process_deploy(deploy_args).await?;
 
-    println!("\n{} sugar verify\n", style(">>>").magenta());
+    println!("\n{} case verify\n", style(">>>").magenta());
 
     let verify_args = VerifyArgs {
         keypair: args.keypair.clone(),

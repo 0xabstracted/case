@@ -13,8 +13,8 @@ use anchor_lang::prelude::AccountMeta;
 use anyhow::Result;
 use chrono::Utc;
 use console::style;
-use mpl_candy_machine::{
-    accounts as nft_accounts, instruction as nft_instruction, CandyError, CandyMachine,
+use tars::{
+    accounts as nft_accounts, instruction as nft_instruction, TarsError, Tars,
     CollectionPDA, EndSettingType, WhitelistMintMode,
 };
 use mpl_token_metadata::pda::find_collection_authority_account;
@@ -28,7 +28,7 @@ use spl_token::{
 
 use crate::{
     cache::load_cache,
-    candy_machine::{CANDY_MACHINE_ID, *},
+    tars::{TARS_ID, *},
     common::*,
     config::Cluster,
     pdas::*,
@@ -40,57 +40,57 @@ pub struct MintArgs {
     pub rpc_url: Option<String>,
     pub cache: String,
     pub number: Option<u64>,
-    pub candy_machine: Option<String>,
+    pub tars: Option<String>,
 }
 
 pub fn process_mint(args: MintArgs) -> Result<()> {
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
-    let client = Arc::new(setup_client(&sugar_config)?);
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
+    let client = Arc::new(setup_client(&case_config)?);
 
-    // the candy machine id specified takes precedence over the one from the cache
+    // the tars id specified takes precedence over the one from the cache
 
-    let candy_machine_id = match args.candy_machine {
-        Some(candy_machine_id) => candy_machine_id,
+    let tars_id = match args.tars {
+        Some(tars_id) => tars_id,
         None => {
             let cache = load_cache(&args.cache, false)?;
-            cache.program.candy_machine
+            cache.program.tars
         }
     };
 
-    let candy_pubkey = match Pubkey::from_str(&candy_machine_id) {
-        Ok(candy_pubkey) => candy_pubkey,
+    let tars_pubkey = match Pubkey::from_str(&tars_id) {
+        Ok(tars_pubkey) => tars_pubkey,
         Err(_) => {
-            let error = anyhow!("Failed to parse candy machine id: {}", candy_machine_id);
+            let error = anyhow!("Failed to parse tars id: {}", tars_id);
             error!("{:?}", error);
             return Err(error);
         }
     };
 
     println!(
-        "{} {}Loading candy machine",
+        "{} {}Loading tars",
         style("[1/2]").bold().dim(),
         LOOKING_GLASS_EMOJI
     );
-    println!("{} {}", style("Candy machine ID:").bold(), candy_machine_id);
+    println!("{} {}", style("Tars ID:").bold(), tars_id);
 
     let pb = spinner_with_style();
     pb.set_message("Connecting...");
 
-    let candy_machine_state = Arc::new(get_candy_machine_state(&sugar_config, &candy_pubkey)?);
+    let tars_state = Arc::new(get_tars_state(&case_config, &tars_pubkey)?);
 
     let collection_pda_info =
-        Arc::new(get_collection_pda(&candy_pubkey, &client.program(CANDY_MACHINE_ID)).ok());
+        Arc::new(get_collection_pda(&tars_pubkey, &client.program(TARS_ID)).ok());
 
     pb.finish_with_message("Done");
 
     println!(
-        "\n{} {}Minting from candy machine",
+        "\n{} {}Minting from tars",
         style("[2/2]").bold().dim(),
-        CANDY_EMOJI
+        TARS_EMOJI
     );
 
     let number = args.number.unwrap_or(1);
-    let available = candy_machine_state.data.items_available - candy_machine_state.items_redeemed;
+    let available = tars_state.data.items_available - tars_state.items_redeemed;
 
     if number > available || number == 0 {
         let error = anyhow!("{} item(s) available, requested {}", available, number);
@@ -98,20 +98,20 @@ pub fn process_mint(args: MintArgs) -> Result<()> {
         return Err(error);
     }
 
-    info!("Minting NFT from candy machine: {}", &candy_machine_id);
-    info!("Candy machine program id: {:?}", CANDY_MACHINE_ID);
+    info!("Minting NFT from tars: {}", &tars_id);
+    info!("Tars program id: {:?}", TARS_ID);
 
     if number == 1 {
         let pb = spinner_with_style();
         pb.set_message(format!(
             "{} item(s) remaining",
-            candy_machine_state.data.items_available - candy_machine_state.items_redeemed
+            tars_state.data.items_available - tars_state.items_redeemed
         ));
 
         let result = match mint(
             Arc::clone(&client),
-            candy_pubkey,
-            Arc::clone(&candy_machine_state),
+            tars_pubkey,
+            Arc::clone(&tars_state),
             Arc::clone(&collection_pda_info),
         ) {
             Ok(signature) => format!("{} {}", style("Signature:").bold(), signature),
@@ -129,8 +129,8 @@ pub fn process_mint(args: MintArgs) -> Result<()> {
         for _i in 0..number {
             if let Err(err) = mint(
                 Arc::clone(&client),
-                candy_pubkey,
-                Arc::clone(&candy_machine_state),
+                tars_pubkey,
+                Arc::clone(&tars_state),
                 Arc::clone(&collection_pda_info),
             ) {
                 pb.abandon_with_message(format!("{}", style("Mint failed ").red().bold()));
@@ -149,32 +149,32 @@ pub fn process_mint(args: MintArgs) -> Result<()> {
 
 pub fn mint(
     client: Arc<Client>,
-    candy_machine_id: Pubkey,
-    candy_machine_state: Arc<CandyMachine>,
+    tars_id: Pubkey,
+    tars_state: Arc<Tars>,
     collection_pda_info: Arc<Option<PdaInfo<CollectionPDA>>>,
 ) -> Result<Signature> {
-    let program = client.program(CANDY_MACHINE_ID);
+    let program = client.program(TARS_ID);
     let payer = program.payer();
-    let wallet = candy_machine_state.wallet;
-    let authority = candy_machine_state.authority;
+    let wallet = tars_state.wallet;
+    let authority = tars_state.authority;
 
-    let candy_machine_data = &candy_machine_state.data;
+    let tars_data = &tars_state.data;
 
-    if let Some(_gatekeeper) = &candy_machine_data.gatekeeper {
+    if let Some(_gatekeeper) = &tars_data.gatekeeper {
         return Err(anyhow!(
             "Command-line mint disabled (gatekeeper settings in use)"
         ));
-    } else if candy_machine_state.items_redeemed >= candy_machine_data.items_available {
-        return Err(anyhow!(CandyError::CandyMachineEmpty));
+    } else if tars_state.items_redeemed >= tars_data.items_available {
+        return Err(anyhow!(TarsError::TarsEmpty));
     }
 
-    if candy_machine_state.authority != payer {
+    if tars_state.authority != payer {
         // we are not authority, we need to follow the rules
         // 1. go_live_date
         // 2. whitelist mint settings
         // 3. end settings
         let mint_date = Utc::now().timestamp();
-        let mut mint_enabled = if let Some(date) = candy_machine_data.go_live_date {
+        let mut mint_enabled = if let Some(date) = tars_data.go_live_date {
             // mint will be enabled only if the go live date is earlier
             // than the current date
             date < mint_date
@@ -183,33 +183,33 @@ pub fn mint(
             false
         };
 
-        if let Some(wl_mint_settings) = &candy_machine_data.whitelist_mint_settings {
+        if let Some(wl_mint_settings) = &tars_data.whitelist_mint_settings {
             if wl_mint_settings.presale {
                 // we (temporarily) enable the mint - we will validate if the user
                 // has the wl token when creating the transaction
                 mint_enabled = true;
             } else if !mint_enabled {
-                return Err(anyhow!(CandyError::CandyMachineNotLive));
+                return Err(anyhow!(TarsError::TarsNotLive));
             }
         }
 
         if !mint_enabled {
             // no whitelist mint settings (or no presale) and we are earlier than
             // go live date
-            return Err(anyhow!(CandyError::CandyMachineNotLive));
+            return Err(anyhow!(TarsError::TarsNotLive));
         }
 
-        if let Some(end_settings) = &candy_machine_data.end_settings {
+        if let Some(end_settings) = &tars_data.end_settings {
             match end_settings.end_setting_type {
                 EndSettingType::Date => {
                     if (end_settings.number as i64) < mint_date {
-                        return Err(anyhow!(CandyError::CandyMachineNotLive));
+                        return Err(anyhow!(TarsError::TarsNotLive));
                     }
                 }
                 EndSettingType::Amount => {
-                    if candy_machine_state.items_redeemed >= end_settings.number {
+                    if tars_state.items_redeemed >= end_settings.number {
                         return Err(anyhow!(
-                            "Candy machine is not live (end settings amount reached)"
+                            "Tars is not live (end settings amount reached)"
                         ));
                     }
                 }
@@ -263,7 +263,7 @@ pub fn mint(
     let mut additional_accounts: Vec<AccountMeta> = Vec::new();
 
     // Check whitelist mint settings
-    if let Some(wl_mint_settings) = &candy_machine_data.whitelist_mint_settings {
+    if let Some(wl_mint_settings) = &tars_data.whitelist_mint_settings {
         let whitelist_token_account = get_associated_token_address(&payer, &wl_mint_settings.mint);
 
         additional_accounts.push(AccountMeta {
@@ -307,12 +307,12 @@ pub fn mint(
             }
 
             if !token_found {
-                return Err(anyhow!(CandyError::NoWhitelistToken));
+                return Err(anyhow!(TarsError::NoWhitelistToken));
             }
         }
     }
 
-    if let Some(token_mint) = candy_machine_state.token_mint {
+    if let Some(token_mint) = tars_state.token_mint {
         let user_token_account_info = get_associated_token_address(&payer, &token_mint);
 
         additional_accounts.push(AccountMeta {
@@ -330,14 +330,14 @@ pub fn mint(
 
     let metadata_pda = find_metadata_pda(&nft_mint.pubkey());
     let master_edition_pda = find_master_edition_pda(&nft_mint.pubkey());
-    let (candy_machine_creator_pda, creator_bump) =
-        find_candy_machine_creator_pda(&candy_machine_id);
+    let (tars_creator_pda, creator_bump) =
+        find_tars_creator_pda(&tars_id);
 
     let mut mint_ix = program
         .request()
         .accounts(nft_accounts::MintNFT {
-            candy_machine: candy_machine_id,
-            candy_machine_creator: candy_machine_creator_pda,
+            tars: tars_id,
+            tars_creator: tars_creator_pda,
             payer,
             wallet,
             metadata: metadata_pda,
@@ -375,7 +375,7 @@ pub fn mint(
             find_collection_authority_account(&collection_pda.mint, collection_pda_pubkey).0;
         builder = builder
             .accounts(nft_accounts::SetCollectionDuringMint {
-                candy_machine: candy_machine_id,
+                tars: tars_id,
                 metadata: metadata_pda,
                 payer,
                 collection_pda: *collection_pda_pubkey,

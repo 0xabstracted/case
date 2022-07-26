@@ -6,10 +6,10 @@ use std::{
 
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anyhow::Result;
-use mpl_candy_machine::ConfigLine;
+use tars::ConfigLine;
 use serde::{Deserialize, Serialize};
 
-use crate::{common::*, pdas::find_candy_machine_creator_pda};
+use crate::{common::*, pdas::find_tars_creator_pda};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Cache {
@@ -50,10 +50,10 @@ impl Default for Cache {
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CacheProgram {
-    #[serde(rename = "candyMachine")]
-    pub candy_machine: String,
-    #[serde(rename = "candyMachineCreator")]
-    pub candy_machine_creator: String,
+    #[serde(rename = "tars")]
+    pub tars: String,
+    #[serde(rename = "tarsCreator")]
+    pub tars_creator: String,
     #[serde(rename = "collectionMint")]
     pub collection_mint: String,
 }
@@ -61,18 +61,18 @@ pub struct CacheProgram {
 impl CacheProgram {
     pub fn new() -> Self {
         CacheProgram {
-            candy_machine: String::new(),
-            candy_machine_creator: String::new(),
+            tars: String::new(),
+            tars_creator: String::new(),
             collection_mint: String::new(),
         }
     }
 
-    pub fn new_from_cm(candy_machine: &Pubkey) -> Self {
-        let (candy_machine_creator_pda, _creator_bump) =
-            find_candy_machine_creator_pda(candy_machine);
+    pub fn new_from_cm(tars: &Pubkey) -> Self {
+        let (tars_creator_pda, _creator_bump) =
+            find_tars_creator_pda(tars);
         CacheProgram {
-            candy_machine: candy_machine.to_string(),
-            candy_machine_creator: candy_machine_creator_pda.to_string(),
+            tars: tars.to_string(),
+            tars_creator: tars_creator_pda.to_string(),
             collection_mint: String::new(),
         }
     }

@@ -8,17 +8,17 @@ use anchor_client::solana_sdk::{
 };
 pub use anyhow::{anyhow, Result};
 use chrono::DateTime;
-use mpl_candy_machine::{
-    Creator as CandyCreator, EndSettingType as CandyEndSettingType,
-    EndSettings as CandyEndSettings, GatekeeperConfig as CandyGatekeeperConfig,
-    HiddenSettings as CandyHiddenSettings, WhitelistMintMode as CandyWhitelistMintMode,
-    WhitelistMintSettings as CandyWhitelistMintSettings,
+use tars::{
+    Creator as TarsCreator, EndSettingType as TarsEndSettingType,
+    EndSettings as TarsEndSettings, GatekeeperConfig as TarsGatekeeperConfig,
+    HiddenSettings as TarsHiddenSettings, WhitelistMintMode as TarsWhitelistMintMode,
+    WhitelistMintSettings as TarsWhitelistMintSettings,
 };
 use serde::{Deserialize, Deserializer, Serialize, Serializer};
 
 use crate::config::errors::*;
 
-pub struct SugarConfig {
+pub struct CaseConfig {
     pub keypair: Keypair,
     pub rpc_url: String,
 }
@@ -168,8 +168,8 @@ impl GatekeeperConfig {
         }
     }
 
-    pub fn to_candy_format(&self) -> CandyGatekeeperConfig {
-        CandyGatekeeperConfig {
+    pub fn to_tars_format(&self) -> TarsGatekeeperConfig {
+        TarsGatekeeperConfig {
             gatekeeper_network: self.gatekeeper_network,
             expire_on_use: self.expire_on_use,
         }
@@ -196,11 +196,11 @@ impl EndSettings {
             number,
         }
     }
-    pub fn to_candy_format(&self) -> CandyEndSettings {
-        CandyEndSettings {
+    pub fn to_tars_format(&self) -> TarsEndSettings {
+        TarsEndSettings {
             end_setting_type: match self.end_setting_type {
-                EndSettingType::Date => CandyEndSettingType::Date,
-                EndSettingType::Amount => CandyEndSettingType::Amount,
+                EndSettingType::Date => TarsEndSettingType::Date,
+                EndSettingType::Amount => TarsEndSettingType::Amount,
             },
             number: self.number,
         }
@@ -232,9 +232,9 @@ impl WhitelistMintSettings {
             discount_price,
         }
     }
-    pub fn to_candy_format(&self) -> CandyWhitelistMintSettings {
-        CandyWhitelistMintSettings {
-            mode: self.mode.to_candy_format(),
+    pub fn to_tars_format(&self) -> TarsWhitelistMintSettings {
+        TarsWhitelistMintSettings {
+            mode: self.mode.to_tars_format(),
             mint: self.mint,
             presale: self.presale,
             discount_price: discount_price_to_lamports(self.discount_price),
@@ -250,10 +250,10 @@ pub enum WhitelistMintMode {
 }
 
 impl WhitelistMintMode {
-    pub fn to_candy_format(&self) -> CandyWhitelistMintMode {
+    pub fn to_tars_format(&self) -> TarsWhitelistMintMode {
         match self {
-            WhitelistMintMode::BurnEveryTime => CandyWhitelistMintMode::BurnEveryTime,
-            WhitelistMintMode::NeverBurn => CandyWhitelistMintMode::NeverBurn,
+            WhitelistMintMode::BurnEveryTime => TarsWhitelistMintMode::BurnEveryTime,
+            WhitelistMintMode::NeverBurn => TarsWhitelistMintMode::NeverBurn,
         }
     }
 }
@@ -281,8 +281,8 @@ impl HiddenSettings {
     pub fn new(name: String, uri: String, hash: String) -> HiddenSettings {
         HiddenSettings { name, uri, hash }
     }
-    pub fn to_candy_format(&self) -> CandyHiddenSettings {
-        CandyHiddenSettings {
+    pub fn to_tars_format(&self) -> TarsHiddenSettings {
+        TarsHiddenSettings {
             name: self.name.clone(),
             uri: self.uri.clone(),
             hash: self
@@ -326,8 +326,8 @@ pub struct Creator {
 }
 
 impl Creator {
-    pub fn to_candy_format(&self) -> Result<CandyCreator> {
-        let creator = CandyCreator {
+    pub fn to_tars_format(&self) -> Result<TarsCreator> {
+        let creator = TarsCreator {
             address: self.address,
             share: self.share,
             verified: false,

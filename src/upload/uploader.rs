@@ -16,7 +16,7 @@ use tokio::task::JoinHandle;
 
 use crate::{
     cache::Cache,
-    config::{ConfigData, SugarConfig, UploadMethod},
+    config::{ConfigData, CaseConfig, UploadMethod},
     constants::PARALLEL_LIMIT,
     upload::{
         assets::{AssetPair, DataType},
@@ -64,7 +64,7 @@ pub trait Prepare {
     ///
     /// # Arguments
     ///
-    /// * `sugar_config` - The current sugar configuration
+    /// * `case_config` - The current case configuration
     /// * `asset_pairs` - Mapping of `index` to an `AssetPair`
     /// * `asset_indices` - Vector with the information of which asset pair indices will be upload grouped by type.
     ///
@@ -74,7 +74,7 @@ pub trait Prepare {
     ///
     async fn prepare(
         &self,
-        sugar_config: &SugarConfig,
+        case_config: &CaseConfig,
         asset_pairs: &HashMap<isize, AssetPair>,
         asset_indices: Vec<(DataType, &[isize])>,
     ) -> Result<()>;
@@ -95,7 +95,7 @@ pub trait Uploader: Prepare {
     ///
     /// # Arguments
     ///
-    /// * `sugar_config` - The current sugar configuration
+    /// * `case_config` - The current case configuration
     /// * `cache` - Asset [`cache`](crate::cache::Cache) object (mutable)
     /// * `data_type` - Type of the asset being uploaded
     /// * `assets` - Vector of [`assets`](AssetInfo) to upload (mutable)
@@ -146,7 +146,7 @@ pub trait Uploader: Prepare {
     ///
     async fn upload(
         &self,
-        sugar_config: &SugarConfig,
+        case_config: &CaseConfig,
         cache: &mut Cache,
         data_type: DataType,
         assets: &mut Vec<AssetInfo>,
@@ -190,7 +190,7 @@ impl<T: ParallelUploader> Uploader for T {
     ///
     async fn upload(
         &self,
-        _sugar_config: &SugarConfig,
+        _case_config: &CaseConfig,
         cache: &mut Cache,
         data_type: DataType,
         assets: &mut Vec<AssetInfo>,
@@ -268,19 +268,19 @@ impl<T: ParallelUploader> Uploader for T {
 /// This function acts as a *factory* function for uploader objects.
 ///
 pub async fn initialize(
-    sugar_config: &SugarConfig,
+    case_config: &CaseConfig,
     config_data: &ConfigData,
 ) -> Result<Box<dyn Uploader>> {
     Ok(match config_data.upload_method {
         UploadMethod::AWS => Box::new(AWSMethod::new(config_data).await?) as Box<dyn Uploader>,
         UploadMethod::Bundlr => {
-            Box::new(BundlrMethod::new(sugar_config, config_data).await?) as Box<dyn Uploader>
+            Box::new(BundlrMethod::new(case_config, config_data).await?) as Box<dyn Uploader>
         }
         UploadMethod::NftStorage => {
             Box::new(NftStorageMethod::new(config_data).await?) as Box<dyn Uploader>
         }
         UploadMethod::SHDW => {
-            Box::new(SHDWMethod::new(sugar_config, config_data).await?) as Box<dyn Uploader>
+            Box::new(SHDWMethod::new(case_config, config_data).await?) as Box<dyn Uploader>
         }
     })
 }

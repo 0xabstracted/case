@@ -33,7 +33,7 @@ pub enum Commands {
         #[clap(default_value = DEFAULT_ASSETS)]
         assets_dir: String,
     },
-    /// Create a candy machine deployment from assets
+    /// Create a tars deployment from assets
     Launch {
         /// Path to the directory with the assets to upload
         #[clap(default_value = DEFAULT_ASSETS)]
@@ -63,7 +63,7 @@ pub enum Commands {
         #[clap(long)]
         skip_collection_prompt: bool,
     },
-    /// Mint one NFT from candy machine
+    /// Mint one NFT from tars
     Mint {
         /// Path to the keypair file, uses Sol config or defaults to "~/.config/solana/id.json"
         #[clap(short, long)]
@@ -81,12 +81,12 @@ pub enum Commands {
         #[clap(short, long)]
         number: Option<u64>,
 
-        /// Address of candy machine to mint from.
+        /// Address of tars to mint from.
         #[clap(long)]
-        candy_machine: Option<String>,
+        tars: Option<String>,
     },
 
-    /// Update the candy machine config on-chain
+    /// Update the tars config on-chain
     Update {
         /// Path to the config file, defaults to "config.json"
         #[clap(short, long, default_value = DEFAULT_CONFIG)]
@@ -108,12 +108,12 @@ pub enum Commands {
         #[clap(short, long)]
         new_authority: Option<String>,
 
-        /// Address of candy machine to update.
+        /// Address of tars to update.
         #[clap(long)]
-        candy_machine: Option<String>,
+        tars: Option<String>,
     },
 
-    /// Deploy cache items into candy machine config on-chain
+    /// Deploy cache items into tars config on-chain
     Deploy {
         /// Path to the config file, defaults to "config.json"
         #[clap(short, long, default_value = DEFAULT_CONFIG)]
@@ -155,11 +155,11 @@ pub enum Commands {
         cache: String,
     },
 
-    /// Withdraw funds from candy machine account closing it
+    /// Withdraw funds from tars account closing it
     Withdraw {
-        /// Address of candy machine to withdraw funds from.
+        /// Address of tars to withdraw funds from.
         #[clap(long)]
-        candy_machine: Option<String>,
+        tars: Option<String>,
 
         /// Path to the keypair file, uses Sol config or defaults to "~/.config/solana/id.json"
         #[clap(short, long)]
@@ -169,7 +169,7 @@ pub enum Commands {
         #[clap(short, long)]
         rpc_url: Option<String>,
 
-        /// List available candy machines, no withdraw performed
+        /// List available tarss, no withdraw performed
         #[clap(long)]
         list: bool,
     },
@@ -204,7 +204,7 @@ pub enum Commands {
         cache: String,
     },
 
-    /// Show the on-chain config of an existing candy machine
+    /// Show the on-chain config of an existing tars
     Show {
         /// Path to the keypair file, uses Sol config or defaults to "~/.config/solana/id.json"
         #[clap(short, long)]
@@ -218,8 +218,8 @@ pub enum Commands {
         #[clap(long, default_value = DEFAULT_CACHE)]
         cache: String,
 
-        /// Address of candy machine
-        candy_machine: Option<String>,
+        /// Address of tars
+        tars: Option<String>,
 
         /// Display a list of unminted indices
         #[clap(long)]
@@ -240,7 +240,7 @@ pub enum Commands {
         action: BundlrAction,
     },
 
-    /// Manage the collection on the candy machine
+    /// Manage the collection on the tars
     Collection {
         #[clap(subcommand)]
         command: CollectionSubcommands,
@@ -249,7 +249,7 @@ pub enum Commands {
 
 #[derive(Subcommand)]
 pub enum CollectionSubcommands {
-    /// Set the collection mint on the candy machine
+    /// Set the collection mint on the tars
     Set {
         /// Path to the keypair file, uses Sol config or defaults to "~/.config/solana/id.json"
         #[clap(short, long)]
@@ -263,15 +263,15 @@ pub enum CollectionSubcommands {
         #[clap(long, default_value = DEFAULT_CACHE)]
         cache: String,
 
-        /// Address of candy machine to update.
+        /// Address of tars to update.
         #[clap(long)]
-        candy_machine: Option<String>,
+        tars: Option<String>,
 
-        /// Address of collection mint to set the candy machine to.
+        /// Address of collection mint to set the tars to.
         collection_mint: String,
     },
 
-    /// Remove the collection from the candy machine
+    /// Remove the collection from the tars
     Remove {
         /// Path to the keypair file, uses Sol config or defaults to "~/.config/solana/id.json"
         #[clap(short, long)]
@@ -285,9 +285,9 @@ pub enum CollectionSubcommands {
         #[clap(long, default_value = DEFAULT_CACHE)]
         cache: String,
 
-        /// Address of candy machine to update.
+        /// Address of tars to update.
         #[clap(long)]
-        candy_machine: Option<String>,
+        tars: Option<String>,
     },
 }
 

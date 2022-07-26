@@ -39,7 +39,7 @@ pub fn path_to_string(path: &Path) -> Result<String> {
     }
 }
 
-pub fn parse_sugar_errors(msg: &str) -> String {
+pub fn parse_case_errors(msg: &str) -> String {
     lazy_static! {
         static ref RE: Regex =
             Regex::new(r"(0x[A-Za-z1-9]+)").expect("Failed to compile parse_client_error regex.");
@@ -69,8 +69,8 @@ fn find_external_program_error(code: String) -> String {
         format!("Anchor Error: {e}")
     } else if let Some(e) = METADATA_ERROR.get(&parsed_code) {
         format!("Token Metadata Error: {e}")
-    } else if let Some(e) = CANDY_ERROR.get(&parsed_code) {
-        format!("Candy Machine Error: {e}")
+    } else if let Some(e) = TARS_ERROR.get(&parsed_code) {
+        format!("Tars Error: {e}")
     } else {
         format!("Unknown error. Code: {code}")
     }

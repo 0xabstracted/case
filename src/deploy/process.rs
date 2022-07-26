@@ -18,14 +18,14 @@ use spl_associated_token_account::get_associated_token_address;
 
 use crate::{
     cache::*,
-    candy_machine::{get_candy_machine_state, CANDY_MACHINE_ID},
+    tars::{get_tars_state, TARS_ID},
     common::*,
     config::parser::get_config_data,
     deploy::{
-        create_and_set_collection, create_candy_machine_data, errors::*, generate_config_lines,
-        initialize_candy_machine, upload_config_lines,
+        create_and_set_collection, create_tars_data, errors::*, generate_config_lines,
+        initialize_tars, upload_config_lines,
     },
-    setup::{setup_client, sugar_setup},
+    setup::{setup_client, case_setup},
     utils::*,
     validate::parser::{check_name, check_seller_fee_basis_points, check_symbol, check_url},
 };
@@ -72,13 +72,13 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
         }
     }
 
-    let sugar_config = Arc::new(sugar_setup(args.keypair, args.rpc_url)?);
-    let client = setup_client(&sugar_config)?;
+    let case_config = Arc::new(case_setup(args.keypair, args.rpc_url)?);
+    let client = setup_client(&case_config)?;
     let config_data = get_config_data(&args.config)?;
 
-    let candy_machine_address = &cache.program.candy_machine;
+    let tars_address = &cache.program.tars;
 
-    // checks the candy machine data
+    // checks the tars data
 
     let num_items = config_data.number;
     let hidden = config_data.hidden_settings.is_some();
@@ -101,23 +101,23 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
 
     let total_steps = 2 + (collection_in_cache as u8) - (hidden as u8);
 
-    let candy_pubkey = if candy_machine_address.is_empty() {
+    let tars_pubkey = if tars_address.is_empty() {
         println!(
-            "{} {}Creating candy machine",
+            "{} {}Creating tars",
             style(format!("[1/{}]", total_steps)).bold().dim(),
-            CANDY_EMOJI
+            TARS_EMOJI
         );
-        info!("Candy machine address is empty, creating new candy machine...");
+        info!("Tars address is empty, creating new tars...");
 
         let spinner = spinner_with_style();
-        spinner.set_message("Creating candy machine...");
+        spinner.set_message("Creating tars...");
 
-        let candy_keypair = Keypair::new();
-        let candy_pubkey = candy_keypair.pubkey();
+        let tars_keypair = Keypair::new();
+        let tars_pubkey = tars_keypair.pubkey();
 
         let uuid = DEFAULT_UUID.to_string();
-        let candy_data = create_candy_machine_data(&client, &config_data, uuid)?;
-        let program = client.program(CANDY_MACHINE_ID);
+        let tars_data = create_tars_data(&client, &config_data, uuid)?;
+        let program = client.program(TARS_ID);
 
         let treasury_wallet = match config_data.spl_token {
             Some(spl_token) => {
@@ -146,67 +146,67 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
             }
             None => match config_data.sol_treasury_account {
                 Some(sol_treasury_account) => sol_treasury_account,
-                None => sugar_config.keypair.pubkey(),
+                None => case_config.keypair.pubkey(),
             },
         };
 
-        // all good, let's create the candy machine
+        // all good, let's create the tars
 
-        let sig = initialize_candy_machine(
+        let sig = initialize_tars(
             &config_data,
-            &candy_keypair,
-            candy_data,
+            &tars_keypair,
+            tars_data,
             treasury_wallet,
             program,
         )?;
-        info!("Candy machine initialized with sig: {}", sig);
+        info!("Tars initialized with sig: {}", sig);
         info!(
-            "Candy machine created with address: {}",
-            &candy_pubkey.to_string()
+            "Tars created with address: {}",
+            &tars_pubkey.to_string()
         );
 
-        cache.program = CacheProgram::new_from_cm(&candy_pubkey);
+        cache.program = CacheProgram::new_from_cm(&tars_pubkey);
         cache.sync_file()?;
 
         spinner.finish_and_clear();
 
-        candy_pubkey
+        tars_pubkey
     } else {
         println!(
-            "{} {}Loading candy machine",
+            "{} {}Loading tars",
             style(format!("[1/{}]", total_steps)).bold().dim(),
-            CANDY_EMOJI
+            TARS_EMOJI
         );
 
-        let candy_pubkey = match Pubkey::from_str(candy_machine_address) {
+        let tars_pubkey = match Pubkey::from_str(tars_address) {
             Ok(pubkey) => pubkey,
             Err(_err) => {
                 error!(
-                    "Invalid candy machine address in cache file: {}!",
-                    candy_machine_address
+                    "Invalid tars address in cache file: {}!",
+                    tars_address
                 );
-                return Err(CacheError::InvalidCandyMachineAddress(
-                    candy_machine_address.to_string(),
+                return Err(CacheError::InvalidTarsAddress(
+                    tars_address.to_string(),
                 )
                 .into());
             }
         };
 
-        match get_candy_machine_state(&Arc::clone(&sugar_config), &candy_pubkey) {
-            Ok(candy_state) => {
-                if candy_state.items_redeemed > 0 {
+        match get_tars_state(&Arc::clone(&case_config), &tars_pubkey) {
+            Ok(tars_state) => {
+                if tars_state.items_redeemed > 0 {
                     item_redeemed = true;
                 }
             }
             Err(_) => {
-                return Err(anyhow!("Candy machine from cache does't exist on chain!"));
+                return Err(anyhow!("Tars from cache does't exist on chain!"));
             }
         }
 
-        candy_pubkey
+        tars_pubkey
     };
 
-    println!("{} {}", style("Candy machine ID:").bold(), candy_pubkey);
+    println!("{} {}", style("Tars ID:").bold(), tars_pubkey);
 
     if !hidden {
         println!(
@@ -224,8 +224,8 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
             args.interrupted.store(false, Ordering::SeqCst);
 
             let errors = upload_config_lines(
-                Arc::clone(&sugar_config),
-                candy_pubkey,
+                Arc::clone(&case_config),
+                tars_pubkey,
                 &mut cache,
                 config_lines,
                 args.interrupted,
@@ -255,18 +255,18 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
             }
         }
     } else {
-        println!("\nCandy machine with hidden settings deployed.");
+        println!("\nTars with hidden settings deployed.");
     }
 
     if let Some(collection_item) = cache.items.get_mut("-1") {
         println!(
-            "\n{} {}Creating and setting the collection NFT for candy machine",
+            "\n{} {}Creating and setting the collection NFT for tars",
             style(format!("[3/{}]", total_steps)).bold().dim(),
             COLLECTION_EMOJI
         );
 
         if item_redeemed {
-            println!("\nAn item has already been minted and thus cannot modify the candy machine collection. Skipping...");
+            println!("\nAn item has already been minted and thus cannot modify the tars collection. Skipping...");
         } else if collection_item.on_chain {
             println!("\nCollection mint already deployed.");
         } else {
@@ -274,7 +274,7 @@ pub async fn process_deploy(args: DeployArgs) -> Result<()> {
             pb.set_message("Sending create and set collection NFT transaction...");
 
             let (_, collection_mint) =
-                create_and_set_collection(client, candy_pubkey, &mut cache, config_data)?;
+                create_and_set_collection(client, tars_pubkey, &mut cache, config_data)?;
 
             pb.finish_and_clear();
             println!(

@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths: 
-      - 'script/sugar-install.sh'
+      - 'script/case-install.sh'
 permissions:
   contents: write
 jobs:
@@ -19,7 +19,7 @@ jobs:
       - name: Build 🔧
         run: |
           mkdir build
-          cp ./script/sugar-install.sh ./build/install.sh
+          cp ./script/case-install.sh ./build/install.sh
 
       - name: Deploy 🚀
         uses: JamesIves/github-pages-deploy-action@v4

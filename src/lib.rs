@@ -1,6 +1,6 @@
 pub mod bundlr;
 pub mod cache;
-pub mod candy_machine;
+pub mod tars;
 pub mod cli;
 pub mod collections;
 pub mod common;

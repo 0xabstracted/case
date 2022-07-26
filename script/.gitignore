@@ -1,5 +1,5 @@
 assets
-cache-sugar-test.json
+cache-case-test.json
 config.json
-sugar.log
-.sugar_resume
+case.log
+.case_resume

@@ -35,7 +35,7 @@ pub fn get_cluster(rpc_client: RpcClient) -> Result<Cluster> {
         Ok(Cluster::Mainnet)
     } else {
         Err(anyhow!(format!(
-            "Genesis hash '{}' doesn't match supported Solana clusters for Candy Machine",
+            "Genesis hash '{}' doesn't match supported Solana clusters for Tars",
             genesis_hash
         )))
     }
@@ -132,7 +132,7 @@ pub fn get_dialoguer_theme() -> ColorfulTheme {
 pub fn assert_correct_authority(user_keypair: &Pubkey, update_authority: &Pubkey) -> Result<()> {
     if user_keypair != update_authority {
         return Err(anyhow!(
-            "Update authority does not match that of the candy machine."
+            "Update authority does not match that of the tars."
         ));
     }
 

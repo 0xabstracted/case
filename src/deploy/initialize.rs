@@ -5,44 +5,44 @@ use anchor_client::solana_sdk::{
 };
 use anchor_lang::prelude::AccountMeta;
 use anyhow::Result;
-use mpl_candy_machine::{
-    accounts as nft_accounts, instruction as nft_instruction, CandyMachineData,
-    Creator as CandyCreator,
+use tars::{
+    accounts as nft_accounts, instruction as nft_instruction, TarsData,
+    Creator as TarsCreator,
 };
 pub use mpl_token_metadata::state::{
     MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
 };
 use solana_program::native_token::LAMPORTS_PER_SOL;
 
-use crate::{candy_machine::parse_config_price, common::*, config::data::*, deploy::errors::*};
+use crate::{tars::parse_config_price, common::*, config::data::*, deploy::errors::*};
 
-/// Create the candy machine data struct.
-pub fn create_candy_machine_data(
+/// Create the tars data struct.
+pub fn create_tars_data(
     client: &Client,
     config: &ConfigData,
     uuid: String,
-) -> Result<CandyMachineData> {
+) -> Result<TarsData> {
     let go_live_date: Option<i64> = go_live_date_as_timestamp(&config.go_live_date)?;
 
-    let end_settings = config.end_settings.as_ref().map(|s| s.to_candy_format());
+    let end_settings = config.end_settings.as_ref().map(|s| s.to_tars_format());
 
     let whitelist_mint_settings = config
         .whitelist_mint_settings
         .as_ref()
-        .map(|s| s.to_candy_format());
+        .map(|s| s.to_tars_format());
 
-    let hidden_settings = config.hidden_settings.as_ref().map(|s| s.to_candy_format());
+    let hidden_settings = config.hidden_settings.as_ref().map(|s| s.to_tars_format());
 
     let gatekeeper = config
         .gatekeeper
         .as_ref()
-        .map(|gatekeeper| gatekeeper.to_candy_format());
+        .map(|gatekeeper| gatekeeper.to_tars_format());
 
-    let mut creators: Vec<CandyCreator> = Vec::new();
+    let mut creators: Vec<TarsCreator> = Vec::new();
     let mut share = 0u32;
 
     for creator in &config.creators {
-        let c = creator.to_candy_format()?;
+        let c = creator.to_tars_format()?;
         share += c.share as u32;
 
         creators.push(c);
@@ -64,7 +64,7 @@ pub fn create_candy_machine_data(
 
     let price = parse_config_price(client, config)?;
 
-    let data = CandyMachineData {
+    let data = TarsData {
         uuid,
         price,
         symbol: config.symbol.clone(),
@@ -84,18 +84,18 @@ pub fn create_candy_machine_data(
     Ok(data)
 }
 
-/// Send the `initialize_candy_machine` instruction to the candy machine program.
-pub fn initialize_candy_machine(
+/// Send the `initialize_tars` instruction to the tars program.
+pub fn initialize_tars(
     config_data: &ConfigData,
-    candy_account: &Keypair,
-    candy_machine_data: CandyMachineData,
+    tars_account: &Keypair,
+    tars_data: TarsData,
     treasury_wallet: Pubkey,
     program: Program,
 ) -> Result<Signature> {
     let payer = program.payer();
-    let items_available = candy_machine_data.items_available;
+    let items_available = tars_data.items_available;
 
-    let candy_account_size = if candy_machine_data.hidden_settings.is_some() {
+    let tars_account_size = if tars_data.hidden_settings.is_some() {
         CONFIG_ARRAY_START
     } else {
         CONFIG_ARRAY_START
@@ -106,14 +106,14 @@ pub fn initialize_candy_machine(
     };
 
     info!(
-        "Initializing candy machine with account size of: {} and address of: {}",
-        candy_account_size,
-        candy_account.pubkey().to_string()
+        "Initializing tars with account size of: {} and address of: {}",
+        tars_account_size,
+        tars_account.pubkey().to_string()
     );
 
     let lamports = program
         .rpc()
-        .get_minimum_balance_for_rent_exemption(candy_account_size)?;
+        .get_minimum_balance_for_rent_exemption(tars_account_size)?;
 
     let balance = program.rpc().get_account(&payer)?.lamports;
 
@@ -129,22 +129,22 @@ pub fn initialize_candy_machine(
         .request()
         .instruction(system_instruction::create_account(
             &payer,
-            &candy_account.pubkey(),
+            &tars_account.pubkey(),
             lamports,
-            candy_account_size as u64,
+            tars_account_size as u64,
             &program.id(),
         ))
-        .signer(candy_account)
-        .accounts(nft_accounts::InitializeCandyMachine {
-            candy_machine: candy_account.pubkey(),
+        .signer(tars_account)
+        .accounts(nft_accounts::InitializeTars {
+            tars: tars_account.pubkey(),
             wallet: treasury_wallet,
             authority: payer,
             payer,
             system_program: system_program::id(),
             rent: sysvar::rent::ID,
         })
-        .args(nft_instruction::InitializeCandyMachine {
-            data: candy_machine_data,
+        .args(nft_instruction::InitializeTars {
+            data: tars_data,
         });
 
     if let Some(token) = config_data.spl_token {

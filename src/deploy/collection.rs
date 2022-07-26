@@ -12,7 +12,7 @@ use spl_token::{
 };
 
 use crate::{
-    candy_machine::CANDY_MACHINE_ID,
+    tars::TARS_ID,
     common::*,
     config::ConfigData,
     pdas::{find_collection_pda, find_master_edition_pda, find_metadata_pda},
@@ -20,11 +20,11 @@ use crate::{
 
 pub fn create_and_set_collection(
     client: Client,
-    candy_pubkey: Pubkey,
+    tars_pubkey: Pubkey,
     cache: &mut Cache,
     config_data: ConfigData,
 ) -> Result<(Signature, Pubkey)> {
-    let program = client.program(CANDY_MACHINE_ID);
+    let program = client.program(TARS_ID);
     let payer = program.payer();
 
     let collection_mint = Keypair::new();
@@ -112,7 +112,7 @@ pub fn create_and_set_collection(
         Some(0),
     );
 
-    let collection_pda_pubkey = find_collection_pda(&candy_pubkey).0;
+    let collection_pda_pubkey = find_collection_pda(&tars_pubkey).0;
     let collection_authority_record =
         find_collection_authority_account(&collection_mint.pubkey(), &collection_pda_pubkey).0;
 
@@ -126,7 +126,7 @@ pub fn create_and_set_collection(
         .instruction(create_metadata_account_ix)
         .instruction(create_master_edition_ix)
         .accounts(nft_accounts::SetCollection {
-            candy_machine: candy_pubkey,
+            tars: tars_pubkey,
             authority: payer,
             collection_pda: collection_pda_pubkey,
             payer,

@@ -11,7 +11,7 @@ use std::{
 use anyhow::{anyhow, Result};
 use clap::Parser;
 use console::style;
-use sugar_cli::{
+use case_cli::{
     bundlr::{process_bundlr, BundlrArgs},
     cli::{Cli, CollectionSubcommands, Commands},
     collections::{
@@ -22,7 +22,7 @@ use sugar_cli::{
     deploy::{process_deploy, DeployArgs},
     launch::{process_launch, LaunchArgs},
     mint::{process_mint, MintArgs},
-    parse::parse_sugar_errors,
+    parse::parse_case_errors,
     show::{process_show, ShowArgs},
     update::{process_update, UpdateArgs},
     upload::{process_upload, UploadArgs},
@@ -37,7 +37,7 @@ use tracing_subscriber::{self, filter::LevelFilter, prelude::*, EnvFilter};
 fn setup_logging(level: Option<EnvFilter>) -> Result<()> {
     // Log path; change this to be dynamic for multiple OSes.
     // Log in current directory for now.
-    let log_path = PathBuf::from("sugar.log");
+    let log_path = PathBuf::from("case.log");
 
     let file = OpenOptions::new()
         .write(true)
@@ -52,7 +52,7 @@ fn setup_logging(level: Option<EnvFilter>) -> Result<()> {
         EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new("trace"))
     };
 
-    let formatting_layer = BunyanFormattingLayer::new("sugar".into(), file);
+    let formatting_layer = BunyanFormattingLayer::new("case".into(), file);
     let level_filter = LevelFilter::from_str(&env_filter.to_string())?;
 
     let subscriber = tracing_subscriber::registry()
@@ -75,7 +75,7 @@ async fn main() {
             );
         }
         Err(err) => {
-            let parsed_err = parse_sugar_errors(&err.to_string());
+            let parsed_err = parse_case_errors(&err.to_string());
 
             println!(
                 "\n{}{} {}",
@@ -109,7 +109,7 @@ async fn run() -> Result<()> {
         setup_logging(None)?;
     }
 
-    tracing::info!("Lend me some sugar, I am your neighbor.");
+    tracing::info!("Lend me some case, I am your neighbor.");
 
     let interrupted = Arc::new(AtomicBool::new(true));
     let ctrl_handler = interrupted.clone();
@@ -168,13 +168,13 @@ async fn run() -> Result<()> {
             rpc_url,
             cache,
             number,
-            candy_machine,
+            tars,
         } => process_mint(MintArgs {
             keypair,
             rpc_url,
             cache,
             number,
-            candy_machine,
+            tars,
         })?,
         Commands::Update {
             config,
@@ -182,14 +182,14 @@ async fn run() -> Result<()> {
             rpc_url,
             cache,
             new_authority,
-            candy_machine,
+            tars,
         } => process_update(UpdateArgs {
             config,
             keypair,
             rpc_url,
             cache,
             new_authority,
-            candy_machine,
+            tars,
         })?,
         Commands::Deploy {
             config,
@@ -233,12 +233,12 @@ async fn run() -> Result<()> {
             skip_collection_prompt,
         })?,
         Commands::Withdraw {
-            candy_machine,
+            tars,
             keypair,
             rpc_url,
             list,
         } => process_withdraw(WithdrawArgs {
-            candy_machine,
+            tars,
             keypair,
             rpc_url,
             list,
@@ -256,13 +256,13 @@ async fn run() -> Result<()> {
             keypair,
             rpc_url,
             cache,
-            candy_machine,
+            tars,
             unminted,
         } => process_show(ShowArgs {
             keypair,
             rpc_url,
             cache,
-            candy_machine,
+            tars,
             unminted,
         })?,
         Commands::Collection { command } => match command {
@@ -270,25 +270,25 @@ async fn run() -> Result<()> {
                 keypair,
                 rpc_url,
                 cache,
-                candy_machine,
+                tars,
                 collection_mint,
             } => process_set_collection(SetCollectionArgs {
                 collection_mint,
                 keypair,
                 rpc_url,
                 cache,
-                candy_machine,
+                tars,
             })?,
             CollectionSubcommands::Remove {
                 keypair,
                 rpc_url,
                 cache,
-                candy_machine,
+                tars,
             } => process_remove_collection(RemoveCollectionArgs {
                 keypair,
                 rpc_url,
                 cache,
-                candy_machine,
+                tars,
             })?,
         },
         Commands::Bundlr {

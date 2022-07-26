@@ -86,7 +86,7 @@ impl AWSMethod {
 impl Prepare for AWSMethod {
     async fn prepare(
         &self,
-        _sugar_config: &SugarConfig,
+        _case_config: &CaseConfig,
         _asset_pairs: &HashMap<isize, AssetPair>,
         _asset_indices: Vec<(DataType, &[isize])>,
     ) -> Result<()> {

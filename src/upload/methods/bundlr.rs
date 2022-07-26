@@ -12,7 +12,7 @@ use tokio::{
 };
 
 use crate::{
-    candy_machine::CANDY_MACHINE_ID,
+    tars::TARS_ID,
     common::*,
     config::*,
     upload::{
@@ -36,15 +36,15 @@ const MINIMUM_SIZE: u64 = 10000;
 
 pub struct BundlrMethod {
     pub client: Arc<Bundlr<SolanaSigner>>,
-    pub sugar_tag: Tag,
+    pub case_tag: Tag,
     pubkey: Pubkey,
     node: String,
 }
 
 impl BundlrMethod {
-    pub async fn new(sugar_config: &SugarConfig, config_data: &ConfigData) -> Result<Self> {
-        let client = setup_client(sugar_config)?;
-        let program = client.program(CANDY_MACHINE_ID);
+    pub async fn new(case_config: &CaseConfig, config_data: &ConfigData) -> Result<Self> {
+        let client = setup_client(case_config)?;
+        let program = client.program(TARS_ID);
         let solana_cluster: Cluster = get_cluster(program.rpc())?;
 
         let bundlr_node = match config_data.upload_method {
@@ -66,7 +66,7 @@ impl BundlrMethod {
 
         let bundlr_pubkey = Pubkey::from_str(&bundlr_address)?;
         // get keypair as base58 string for Bundlr
-        let keypair = bs58::encode(sugar_config.keypair.to_bytes()).into_string();
+        let keypair = bs58::encode(case_config.keypair.to_bytes()).into_string();
         let signer = SolanaSigner::from_base58(&keypair);
 
         let bundlr_client = Bundlr::new(
@@ -76,12 +76,12 @@ impl BundlrMethod {
             signer,
         );
 
-        let sugar_tag = Tag::new("App-Name".into(), format!("Sugar {}", crate_version!()));
+        let case_tag = Tag::new("App-Name".into(), format!("Case {}", crate_version!()));
 
         Ok(Self {
             client: Arc::new(bundlr_client),
             pubkey: bundlr_pubkey,
-            sugar_tag,
+            case_tag,
             node: bundlr_node.to_string(),
         })
     }
@@ -212,7 +212,7 @@ impl BundlrMethod {
 impl Prepare for BundlrMethod {
     async fn prepare(
         &self,
-        sugar_config: &SugarConfig,
+        case_config: &CaseConfig,
         assets: &HashMap<isize, AssetPair>,
         asset_indices: Vec<(DataType, &[isize])>,
     ) -> Result<()> {
@@ -269,7 +269,7 @@ impl Prepare for BundlrMethod {
 
         let lamports_fee =
             BundlrMethod::get_bundlr_fee(&http_client, &self.node, total_size).await?;
-        let address = sugar_config.keypair.pubkey().to_string();
+        let address = case_config.keypair.pubkey().to_string();
         let mut balance =
             BundlrMethod::get_bundlr_balance(&http_client, &address, &self.node).await?;
 
@@ -281,8 +281,8 @@ impl Prepare for BundlrMethod {
         // funds the bundlr wallet for media upload
 
         let rpc_client = {
-            let client = setup_client(sugar_config)?;
-            let program = client.program(CANDY_MACHINE_ID);
+            let client = setup_client(case_config)?;
+            let program = client.program(TARS_ID);
             program.rpc()
         };
 
@@ -292,7 +292,7 @@ impl Prepare for BundlrMethod {
                 &http_client,
                 &self.pubkey,
                 &self.node,
-                &sugar_config.keypair,
+                &case_config.keypair,
                 lamports_fee - balance,
             )
             .await?;
@@ -341,7 +341,7 @@ impl Prepare for BundlrMethod {
 impl ParallelUploader for BundlrMethod {
     fn upload_asset(&self, asset_info: AssetInfo) -> JoinHandle<Result<(String, String)>> {
         let client = self.client.clone();
-        let tag = self.sugar_tag.clone();
+        let tag = self.case_tag.clone();
         tokio::spawn(async move { BundlrMethod::send(client, tag, asset_info).await })
     }
 }

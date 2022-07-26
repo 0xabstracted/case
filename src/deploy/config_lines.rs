@@ -10,13 +10,13 @@ use anchor_client::solana_sdk::{pubkey::Pubkey, signature::Keypair};
 use anyhow::Result;
 use console::style;
 use futures::future::select_all;
-use mpl_candy_machine::{accounts as nft_accounts, instruction as nft_instruction, ConfigLine};
+use tars::{accounts as nft_accounts, instruction as nft_instruction, ConfigLine};
 pub use mpl_token_metadata::state::{
     MAX_CREATOR_LIMIT, MAX_NAME_LENGTH, MAX_SYMBOL_LENGTH, MAX_URI_LENGTH,
 };
 
 use crate::{
-    cache::*, candy_machine::CANDY_MACHINE_ID, common::*, config::data::*, deploy::errors::*,
+    cache::*, tars::TARS_ID, common::*, config::data::*, deploy::errors::*,
     setup::setup_client, utils::*,
 };
 
@@ -27,7 +27,7 @@ const MAX_TRANSACTION_BYTES: usize = 1000;
 const MAX_TRANSACTION_LINES: usize = 17;
 
 pub struct TxInfo {
-    candy_pubkey: Pubkey,
+    tars_pubkey: Pubkey,
     payer: Keypair,
     chunk: Vec<(u32, ConfigLine)>,
 }
@@ -86,10 +86,10 @@ pub fn generate_config_lines(
     Ok(config_lines)
 }
 
-/// Send the config lines to the candy machine program.
+/// Send the config lines to the tars program.
 pub async fn upload_config_lines(
-    sugar_config: Arc<SugarConfig>,
-    candy_pubkey: Pubkey,
+    case_config: Arc<CaseConfig>,
+    tars_pubkey: Pubkey,
     cache: &mut Cache,
     config_lines: Vec<Vec<(u32, ConfigLine)>>,
     interrupted: Arc<AtomicBool>,
@@ -107,11 +107,11 @@ pub async fn upload_config_lines(
     let mut transactions = Vec::new();
 
     for chunk in config_lines {
-        let keypair = bs58::encode(sugar_config.keypair.to_bytes()).into_string();
+        let keypair = bs58::encode(case_config.keypair.to_bytes()).into_string();
         let payer = Keypair::from_base58_string(&keypair);
 
         transactions.push(TxInfo {
-            candy_pubkey,
+            tars_pubkey,
             payer,
             chunk,
         });
@@ -120,7 +120,7 @@ pub async fn upload_config_lines(
     let mut handles = Vec::new();
 
     for tx in transactions.drain(0..cmp::min(transactions.len(), PARALLEL_LIMIT)) {
-        let config = sugar_config.clone();
+        let config = case_config.clone();
         handles.push(tokio::spawn(
             async move { add_config_lines(config, tx).await },
         ));
@@ -170,7 +170,7 @@ pub async fn upload_config_lines(
                 cache.sync_file()?;
 
                 for tx in transactions.drain(0..cmp::min(transactions.len(), PARALLEL_LIMIT / 2)) {
-                    let config = sugar_config.clone();
+                    let config = case_config.clone();
                     handles.push(tokio::spawn(
                         async move { add_config_lines(config, tx).await },
                     ));
@@ -200,10 +200,10 @@ pub async fn upload_config_lines(
     Ok(errors)
 }
 
-/// Send the `add_config_lines` instruction to the candy machine program.
-pub async fn add_config_lines(config: Arc<SugarConfig>, tx_info: TxInfo) -> Result<Vec<u32>> {
+/// Send the `add_config_lines` instruction to the tars program.
+pub async fn add_config_lines(config: Arc<CaseConfig>, tx_info: TxInfo) -> Result<Vec<u32>> {
     let client = setup_client(&config)?;
-    let program = client.program(CANDY_MACHINE_ID);
+    let program = client.program(TARS_ID);
 
     // this will be used to update the cache
     let mut indices: Vec<u32> = Vec::new();
@@ -220,7 +220,7 @@ pub async fn add_config_lines(config: Arc<SugarConfig>, tx_info: TxInfo) -> Resu
     let _sig = program
         .request()
         .accounts(nft_accounts::AddConfigLines {
-            candy_machine: tx_info.candy_pubkey,
+            tars: tx_info.tars_pubkey,
             authority: program.payer(),
         })
         .args(nft_instruction::AddConfigLines {

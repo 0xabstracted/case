@@ -2,14 +2,14 @@ use std::{thread, time::Duration};
 
 use anchor_lang::AccountDeserialize;
 use console::style;
-use mpl_candy_machine::CandyMachine;
+use tars::Tars;
 
 use crate::{
     cache::*,
-    candy_machine::CANDY_MACHINE_ID,
+    tars::TARS_ID,
     common::*,
     config::Cluster,
-    constants::{CANDY_EMOJI, PAPER_EMOJI},
+    constants::{TARS_EMOJI, PAPER_EMOJI},
     pdas::get_collection_pda,
     utils::*,
     verify::VerifyError,
@@ -28,7 +28,7 @@ pub struct OnChainItem {
 }
 
 pub fn process_verify(args: VerifyArgs) -> Result<()> {
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
 
     // loads the cache file (this needs to have been created by
     // the upload command)
@@ -47,36 +47,36 @@ pub fn process_verify(args: VerifyArgs) -> Result<()> {
     }
 
     println!(
-        "{} {}Loading candy machine",
+        "{} {}Loading tars",
         style("[1/2]").bold().dim(),
-        CANDY_EMOJI
+        TARS_EMOJI
     );
 
     let pb = spinner_with_style();
     pb.set_message("Connecting...");
 
-    let candy_machine_pubkey = match Pubkey::from_str(&cache.program.candy_machine) {
+    let tars_pubkey = match Pubkey::from_str(&cache.program.tars) {
         Ok(pubkey) => pubkey,
         Err(_) => {
             pb.finish_and_clear();
-            return Err(CacheError::InvalidCandyMachineAddress(
-                cache.program.candy_machine.clone(),
+            return Err(CacheError::InvalidTarsAddress(
+                cache.program.tars.clone(),
             )
             .into());
         }
     };
 
-    let client = setup_client(&sugar_config)?;
-    let program = client.program(CANDY_MACHINE_ID);
+    let client = setup_client(&case_config)?;
+    let program = client.program(TARS_ID);
 
-    let data = match program.rpc().get_account_data(&candy_machine_pubkey) {
+    let data = match program.rpc().get_account_data(&tars_pubkey) {
         Ok(account_data) => account_data,
         Err(err) => {
             return Err(VerifyError::FailedToGetAccountData(err.to_string()).into());
         }
     };
-    let candy_machine: CandyMachine = CandyMachine::try_deserialize(&mut data.as_slice())?;
-    let collection_info = get_collection_pda(&candy_machine_pubkey, &program).ok();
+    let tars: Tars = Tars::try_deserialize(&mut data.as_slice())?;
+    let collection_info = get_collection_pda(&tars_pubkey, &program).ok();
 
     pb.finish_with_message("Completed");
 
@@ -86,8 +86,8 @@ pub fn process_verify(args: VerifyArgs) -> Result<()> {
         PAPER_EMOJI
     );
 
-    if candy_machine.data.hidden_settings.is_none() {
-        let num_items = candy_machine.data.items_available;
+    if tars.data.hidden_settings.is_none() {
+        let num_items = tars.data.items_available;
         let cache_items = &mut cache.items;
         let mut errors = Vec::new();
 
@@ -154,13 +154,13 @@ pub fn process_verify(args: VerifyArgs) -> Result<()> {
             ));
         }
     } else {
-        // nothing else to do, there are no config lines in a candy machine
+        // nothing else to do, there are no config lines in a tars
         // with hidden settings
         println!("\nHidden settings enabled. No config items to verify.");
     }
-    if candy_machine.items_redeemed > 0 {
+    if tars.items_redeemed > 0 {
         println!(
-            "\nAn item has already been minted. Skipping candy machine collection verification..."
+            "\nAn item has already been minted. Skipping tars collection verification..."
         );
     } else {
         let collection_mint_cache = cache.program.collection_mint.clone();
@@ -213,8 +213,8 @@ pub fn process_verify(args: VerifyArgs) -> Result<()> {
     };
 
     println!(
-        "\nVerification successful. You're good to go!\n\nSee your candy machine at:\n  -> https://www.solaneyes.com/address/{}?cluster={}",
-        cache.program.candy_machine,
+        "\nVerification successful. You're good to go!\n\nSee your tars at:\n  -> https://www.solaneyes.com/address/{}?cluster={}",
+        cache.program.tars,
         cluster
     );
     Ok(())

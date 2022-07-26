@@ -4,27 +4,27 @@ use anchor_client::solana_sdk::{native_token::LAMPORTS_PER_SOL, pubkey::Pubkey};
 use anyhow::Result;
 use chrono::NaiveDateTime;
 use console::style;
-use mpl_candy_machine::{utils::is_feature_active, EndSettingType, WhitelistMintMode};
+use tars::{utils::is_feature_active, EndSettingType, WhitelistMintMode};
 
-use crate::{cache::load_cache, candy_machine::*, common::*, pdas::get_collection_pda, utils::*};
+use crate::{cache::load_cache, tars::*, common::*, pdas::get_collection_pda, utils::*};
 
 pub struct ShowArgs {
     pub keypair: Option<String>,
     pub rpc_url: Option<String>,
     pub cache: String,
-    pub candy_machine: Option<String>,
+    pub tars: Option<String>,
     pub unminted: bool,
 }
 
 // TODO: change the value '1' for the corresponding constant once the
-// new version of the mpl_candy_machine crate is published
+// new version of the tars crate is published
 const SWAP_REMOVE_FEATURE_INDEX: usize = 1;
 // number of indices per line
 const PER_LINE: usize = 11;
 
 pub fn process_show(args: ShowArgs) -> Result<()> {
     println!(
-        "{} {}Looking up candy machine",
+        "{} {}Looking up tars",
         if args.unminted {
             style("[1/2]").bold().dim()
         } else {
@@ -36,48 +36,48 @@ pub fn process_show(args: ShowArgs) -> Result<()> {
     let pb = spinner_with_style();
     pb.set_message("Connecting...");
 
-    // the candy machine id specified takes precedence over the one from the cache
+    // the tars id specified takes precedence over the one from the cache
 
-    let candy_machine_id = if let Some(candy_machine) = args.candy_machine {
-        candy_machine
+    let tars_id = if let Some(tars) = args.tars {
+        tars
     } else {
         let cache = load_cache(&args.cache, false)?;
-        cache.program.candy_machine
+        cache.program.tars
     };
 
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
-    let client = setup_client(&sugar_config)?;
-    let program = client.program(CANDY_MACHINE_ID);
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
+    let client = setup_client(&case_config)?;
+    let program = client.program(TARS_ID);
 
-    let candy_machine_id = match Pubkey::from_str(&candy_machine_id) {
-        Ok(candy_machine_id) => candy_machine_id,
+    let tars_id = match Pubkey::from_str(&tars_id) {
+        Ok(tars_id) => tars_id,
         Err(_) => {
-            let error = anyhow!("Failed to parse candy machine id: {}", candy_machine_id);
+            let error = anyhow!("Failed to parse tars id: {}", tars_id);
             error!("{:?}", error);
             return Err(error);
         }
     };
 
     let collection_mint =
-        if let Ok((_, collection_pda)) = get_collection_pda(&candy_machine_id, &program) {
+        if let Ok((_, collection_pda)) = get_collection_pda(&tars_id, &program) {
             Some(collection_pda.mint)
         } else {
             None
         };
 
-    let cndy_state = get_candy_machine_state(&sugar_config, &candy_machine_id)?;
+    let cndy_state = get_tars_state(&case_config, &tars_id)?;
     let cndy_data = cndy_state.data;
 
     pb.finish_and_clear();
 
     println!(
         "\n{}{} {}",
-        CANDY_EMOJI,
-        style("Candy machine ID:").dim(),
-        &candy_machine_id
+        TARS_EMOJI,
+        style("Tars ID:").dim(),
+        &tars_id
     );
 
-    // candy machine state and data
+    // tars state and data
 
     println!(" {}", style(":").dim());
     print_with_style("", "authority", cndy_state.authority.to_string());
@@ -248,8 +248,8 @@ pub fn process_show(args: ShowArgs) -> Result<()> {
 
         let pb = spinner_with_style();
         pb.set_message("Connecting...");
-        // retrieve the (raw) candy machine data
-        let data = program.rpc().get_account_data(&candy_machine_id)?;
+        // retrieve the (raw) tars data
+        let data = program.rpc().get_account_data(&tars_id)?;
 
         pb.finish_and_clear();
         let mut index = 0;
@@ -286,7 +286,7 @@ pub fn process_show(args: ShowArgs) -> Result<()> {
             println!(
                 "\n{}{}",
                 PAPER_EMOJI,
-                style("All items of the candy machine have been minted.").dim()
+                style("All items of the tars have been minted.").dim()
             );
         } else {
             // makes sure all items are in order

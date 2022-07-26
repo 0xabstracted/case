@@ -47,7 +47,7 @@ pub fn process_validate(args: ValidateArgs) -> Result<()> {
                 "\n{}\n{}\n",
                 style(warning).bold().yellow(),
                 style(
-                    "Check https://docs.metaplex.com/tools/sugar/commands#collection-assets for the collection file requirements \
+                    "Check https://docs.metaplex.com/tools/case/commands#collection-assets for the collection file requirements \
                     if you want a collection to be set automatically."
                 )
                 .italic()
@@ -60,7 +60,7 @@ pub fn process_validate(args: ValidateArgs) -> Result<()> {
                 ..get_dialoguer_theme()
             };
 
-            if !Confirm::with_theme(&theme).with_prompt("Do you want to continue without automatically setting the candy machine collection?").interact()? {
+            if !Confirm::with_theme(&theme).with_prompt("Do you want to continue without automatically setting the tars collection?").interact()? {
                 return Err(anyhow!("Operation aborted"));
             }
             println!();

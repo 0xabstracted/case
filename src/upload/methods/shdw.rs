@@ -57,9 +57,9 @@ impl Deref for SHDWMethod {
 }
 
 impl SHDWMethod {
-    pub async fn new(sugar_config: &SugarConfig, config_data: &ConfigData) -> Result<Self> {
+    pub async fn new(case_config: &CaseConfig, config_data: &ConfigData) -> Result<Self> {
         if let Some(pubkey) = &config_data.shdw_storage_account {
-            let client = setup_client(sugar_config)?;
+            let client = setup_client(case_config)?;
             let program = client.program(SHADOW_DRIVE_PROGRAM_ID);
             let solana_cluster: Cluster = get_cluster(program.rpc())?;
 
@@ -78,7 +78,7 @@ impl SHDWMethod {
                 .send()
                 .await?;
 
-            let key_bytes = sugar_config.keypair.to_bytes();
+            let key_bytes = case_config.keypair.to_bytes();
             let keypair = Keypair::from_bytes(&key_bytes)?;
 
             match response.status() {
@@ -107,7 +107,7 @@ impl SHDWMethod {
 impl Prepare for SHDWMethod {
     async fn prepare(
         &self,
-        _sugar_config: &SugarConfig,
+        _case_config: &CaseConfig,
         assets: &HashMap<isize, AssetPair>,
         asset_indices: Vec<(DataType, &[isize])>,
     ) -> Result<()> {

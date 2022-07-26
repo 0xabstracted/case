@@ -112,19 +112,19 @@ pub static METADATA_ERROR: phf::Map<&'static str, &'static str> = phf_map! {
     "6C" => "MissingEditionAccount: This mint account has an edition but none was provided.",
 };
 
-pub static CANDY_ERROR: phf::Map<&'static str, &'static str> = phf_map! {
+pub static TARS_ERROR: phf::Map<&'static str, &'static str> = phf_map! {
     "1770" => "IncorrectOwner: Account does not have correct owner!",
     "1771" => "Uninitialized: Account is not initialized!",
     "1772" => "MintMismatch: Mint Mismatch!",
     "1773" => "IndexGreaterThanLength: Index greater than length!",
     "1774" => "NumericalOverflowError: Numerical overflow error!",
-    "1775" => "TooManyCreators: Can only provide up to 4 creators to candy machine (because candy machine is one)!",
+    "1775" => "TooManyCreators: Can only provide up to 4 creators to tars (because tars is one)!",
     "1776" => "UuidMustBeExactly6Length: Uuid must be exactly of 6 length",
     "1777" => "NotEnoughTokens: Not enough tokens to pay for this minting",
     "1778" => "NotEnoughSOL: Not enough SOL to pay for this minting",
     "1779" => "TokenTransferFailed: Token transfer failed",
-    "177A" => "CandyMachineEmpty: Candy machine is empty!",
-    "177B" => "CandyMachineNotLive: Candy machine is not live!",
+    "177A" => "TarsEmpty: Tars is empty!",
+    "177B" => "TarsNotLive: Tars is not live!",
     "177C" => "HiddenSettingsConfigsDoNotHaveConfigLines: Configs that are using hidden uris do not have config lines, they have a single hash representing hashed order",
     "177D" => "CannotChangeNumberOfLines: Cannot change number of lines unless is a hidden config",
     "177E" => "DerivedKeyInvalid: Derived key invalid",
@@ -145,9 +145,9 @@ pub static CANDY_ERROR: phf::Map<&'static str, &'static str> = phf_map! {
     "178D" => "MismatchedCollectionMint: Provided mint account doesn't match collection PDA mint",
     "178E" => "SlotHashesEmpty: Slot hashes Sysvar is empty",
     "178F" => "MetadataAccountMustBeEmpty: The metadata account has data in it, and this must be empty to mint a new NFT",
-    "1790" => "MissingSetCollectionDuringMint: Missing set collection during mint IX for Candy Machine with collection set",
+    "1790" => "MissingSetCollectionDuringMint: Missing set collection during mint IX for Tars with collection set",
     "1791" => "NoChangingCollectionDuringMint: Can't change collection settings after items have begun to be minted",
-    "1792" => "CandyCollectionRequiresRetainAuthority: Retain authority must be true for Candy Machines with a collection set",
+    "1792" => "TarsCollectionRequiresRetainAuthority: Retain authority must be true for Tarss with a collection set",
 };
 
 pub static ANCHOR_ERROR: phf::Map<&'static str, &'static str> = phf_map! {

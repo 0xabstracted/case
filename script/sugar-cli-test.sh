@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Sugar CLI - Candy Machine automated test
+# Case CLI - Tars automated test
 #
 # To suppress prompts, you will need to set/export the following variables:
 #
@@ -33,9 +33,9 @@ SCRIPT_DIR=$(cd -- $(dirname -- "${BASH_SOURCE[0]}") &>/dev/null && pwd)
 PARENT_DIR="$(dirname "$SCRIPT_DIR")"
 ASSETS_DIR=$CURRENT_DIR/assets
 CACHE_DIR=$CURRENT_DIR
-SUGAR_BIN="cargo run --quiet --bin sugar --"
-SUGAR_LOG="sugar.log"
-RESUME_FILE="$SCRIPT_DIR/.sugar_resume"
+CASE_BIN="cargo run --quiet --bin case --"
+CASE_LOG="case.log"
+RESUME_FILE="$SCRIPT_DIR/.case_resume"
 
 # Remote files to test the upload
 PNG_MIN="https://arweave.net/N3LqmO6yURUK1JxV9MJtH8YeqppEtZhKuy3RB0Tqm3A/?ext=png"
@@ -116,7 +116,7 @@ function devnet_env() {
 RESUME=0
 
 echo ""
-CYN "Sugar CLI - Candy Machine automated test"
+CYN "Case CLI - Tars automated test"
 CYN "----------------------------------------"
 
 echo ""
@@ -127,7 +127,7 @@ echo "3. devnet (default)"
 echo "4. manual cache"
 echo "5. hidden settings"
 echo "6. animation"
-echo "7. sugar launch"
+echo "7. case launch"
 
 if [ -f "$RESUME_FILE" ]; then
     echo "8. previous run ($(RED "resume"))"
@@ -203,7 +203,7 @@ fi
 while getopts r:p flag; do
     case "${flag}" in
         r) RPC=${OPTARG} ;;
-        p) SUGAR_BIN="cargo run --release --bin sugar --" ;;
+        p) CASE_BIN="cargo run --release --bin case --" ;;
         *) ;;
     esac
 done
@@ -414,7 +414,7 @@ fi
 
 if [ -z ${CLOSE+x} ]; then
     echo ""
-    echo -n "$(CYN "Close candy machine and withdraw funds at the end [Y/n]") (default 'Y'): "
+    echo -n "$(CYN "Close tars and withdraw funds at the end [Y/n]") (default 'Y'): "
     read CLOSE
     if [ -z "$CLOSE" ]; then
         CLOSE="Y"
@@ -430,7 +430,7 @@ echo ""
 # Wallet keypair file
 
 WALLET_KEY="$(solana config get keypair | cut -d : -f 2)"
-CACHE_NAME="sugar-test"
+CACHE_NAME="case-test"
 CACHE_FILE="$CACHE_DIR/cache-${CACHE_NAME}.json"
 LAST_INDEX=$((ITEMS - 1))
 
@@ -441,7 +441,7 @@ function clean_up {
     rm $CONFIG_FILE 2>/dev/null
     rm -rf $ASSETS_DIR 2>/dev/null
     rm -rf $CACHE_FILE 2>/dev/null
-    rm -rf $SUGAR_LOG 2>/dev/null
+    rm -rf $CASE_LOG 2>/dev/null
     rm -rf test_item 2>/dev/null
 }
 
@@ -455,17 +455,17 @@ read -r -d $'\0' METADATA <<-EOM
 {
     "name": "[$TIMESTAMP] Test #%s",
     "symbol": "TEST",
-    "description": "Sugar CLI Test #%s",
+    "description": "Case CLI Test #%s",
     "seller_fee_basis_points": 500,
     "image": "%s"%b
-    "attributes": [{"trait_type": "Flavour", "value": "Sugar"}],
+    "attributes": [{"trait_type": "Flavour", "value": "Case"}],
     "properties": {
         "files": [
         {
             "uri": "%s",
             "type": "%s"
         }%b
-        "category": "Sugar Test"
+        "category": "Case Test"
     }
 }
 EOM
@@ -474,17 +474,17 @@ read -r -d $'\0' COLLECTION <<-EOM
 {
     "name": "[$TIMESTAMP] Collection",
     "symbol": "TEST",
-    "description": "Sugar CLI Collection",
+    "description": "Case CLI Collection",
     "seller_fee_basis_points": 500,
     "image": "collection.png",
-    "attributes": [{"trait_type": "Flavour", "value": "Sugar"}],
+    "attributes": [{"trait_type": "Flavour", "value": "Case"}],
     "properties": {
         "files": [
         {
             "uri": "collection.png",
             "type": "image/png"
         }],
-        "category": "Sugar Test Collection"
+        "category": "Case Test Collection"
     }
 }
 EOM
@@ -552,7 +552,7 @@ if [ $RESUME -eq 0 ]; then
     fi
 
     if [ "$MANUAL_CACHE" == "Y" ]; then
-        echo -n "{\"program\":{\"candyMachine\":\"\", \"candyMachineCreator\":\"\"}, \"items\":{" >> $CACHE_FILE
+        echo -n "{\"program\":{\"tars\":\"\", \"tarsCreator\":\"\"}, \"items\":{" >> $CACHE_FILE
         
         for ((i = 0; i < $ITEMS; i++)); do
             if [ "$i" -gt "0" ]; then
@@ -567,7 +567,7 @@ if [ $RESUME -eq 0 ]; then
     fi
 fi
 
-# Candy Machine configuration
+# Tars configuration
 
 CONFIG_FILE="config.json"
 
@@ -659,7 +659,7 @@ function change_cache {
 
 # run the upload command
 function upload {
-    $SUGAR_BIN upload -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $ASSETS_DIR
+    $CASE_BIN upload -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $ASSETS_DIR
     EXIT_CODE=$?
     if [ ! $EXIT_CODE -eq 0 ]; then
         MAG "<<<"
@@ -670,7 +670,7 @@ function upload {
 
 # run the deploy command
 function deploy {
-    $SUGAR_BIN deploy -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
+    $CASE_BIN deploy -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
     EXIT_CODE=$?
     if [ ! $EXIT_CODE -eq 0 ]; then
         MAG "<<<"
@@ -681,7 +681,7 @@ function deploy {
 
 # run the verify upload command
 function verify {
-    $SUGAR_BIN verify --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
+    $CASE_BIN verify --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
     EXIT_CODE=$?
     if [ ! $EXIT_CODE -eq 0 ]; then
         MAG "<<<"
@@ -692,7 +692,7 @@ function verify {
 
 # extracts the collection mint from the output of show command
 function collection_mint() {
-    local RESULT=`$SUGAR_BIN show --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC | grep "collection" | cut -d ':' -f 3`
+    local RESULT=`$CASE_BIN show --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC | grep "collection" | cut -d ':' -f 3`
     EXIT_CODE=$?
     if [ ! $EXIT_CODE -eq 0 ]; then
         MAG "<<<"
@@ -711,11 +711,11 @@ if [ "${CHANGE}" = "Y" ] && [ "$(command -v jq)" = "" ]; then
     CHANGE="n"
 fi
 
-echo "[$(date "+%T")] Deploying Candy Machine with $ITEMS items"
+echo "[$(date "+%T")] Deploying Tars with $ITEMS items"
 echo "[$(date "+%T")] Environment: ${ENV_URL}"
 echo "[$(date "+%T")] RPC URL: ${RPC}"
 echo "[$(date "+%T")] Testing started using '${STORAGE}' storage"
-echo "[$(date "+%T")] Building sugar binary..."
+echo "[$(date "+%T")] Building case binary..."
 
 # builds the binary (cargo run is quiet)
 cargo build
@@ -727,10 +727,10 @@ fi
 
 if [ "$LAUNCH" = "Y" ]; then
     echo ""
-    CYN "Executing Sugar launch: steps [1, 2, 3, 4]"
+    CYN "Executing Case launch: steps [1, 2, 3, 4]"
     echo ""
     MAG ">>>"
-    $SUGAR_BIN launch -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $ASSETS_DIR --skip-collection-prompt
+    $CASE_BIN launch -c ${CONFIG_FILE} --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $ASSETS_DIR --skip-collection-prompt
     EXIT_CODE=$?
     MAG "<<<"
     
@@ -743,7 +743,7 @@ else
     CYN "1. Validating JSON metadata files"
     echo ""
     MAG ">>>"
-    $SUGAR_BIN validate $ASSETS_DIR --skip-collection-prompt
+    $CASE_BIN validate $ASSETS_DIR --skip-collection-prompt
     EXIT_CODE=$?
     MAG "<<<"
 
@@ -761,7 +761,7 @@ else
     echo ""
 
     echo ""
-    CYN "3. Deploying Candy Machine"
+    CYN "3. Deploying Tars"
     echo ""
     MAG ">>>"
     deploy
@@ -791,7 +791,7 @@ if [ ! "$MANUAL_CACHE" == "Y" ]; then
     echo ""
 
     MAG "Removing collection >>>"
-    $SUGAR_BIN collection remove --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
+    $CASE_BIN collection remove --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC
     MAG "<<<"
 
     # checking that the collection PDA was removed
@@ -804,7 +804,7 @@ if [ ! "$MANUAL_CACHE" == "Y" ]; then
 
     echo ""
     MAG "Setting collection >>>"
-    $SUGAR_BIN collection set --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $COLLECTION_PDA
+    $CASE_BIN collection set --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC $COLLECTION_PDA
     MAG "<<<"
 
     # checking that the collection PDA was set
@@ -835,7 +835,7 @@ echo ""
 CYN "7. Minting"
 echo ""
 MAG ">>>"
-$SUGAR_BIN mint --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC -n $MULTIPLE
+$CASE_BIN mint --keypair $WALLET_KEY --cache $CACHE_FILE -r $RPC -n $MULTIPLE
 EXIT_CODE=$?
 MAG "<<<"
 
@@ -845,12 +845,12 @@ if [ ! $EXIT_CODE -eq 0 ]; then
 fi
 
 if [ "${CLOSE}" = "Y" ]; then
-    CANDY_MACHINE_ID=`cat $CACHE_FILE | sed -n -e 's/^\(.*\)\(\"candyMachine\":\"\)\([a-zA-Z0-9]*\)\(.*\)$/\3/p'`
+    TARS_ID=`cat $CACHE_FILE | sed -n -e 's/^\(.*\)\(\"tars\":\"\)\([a-zA-Z0-9]*\)\(.*\)$/\3/p'`
     echo ""
-    CYN "8. Withdrawing Candy Machine funds and clean up"
+    CYN "8. Withdrawing Tars funds and clean up"
     echo ""
     MAG ">>>"
-    $SUGAR_BIN withdraw --keypair $WALLET_KEY -r $RPC --candy-machine $CANDY_MACHINE_ID
+    $CASE_BIN withdraw --keypair $WALLET_KEY -r $RPC --tars-  $TARS_ID
     EXIT_CODE=$?
     MAG "<<<"
     

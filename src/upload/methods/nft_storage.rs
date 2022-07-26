@@ -110,7 +110,7 @@ impl Prepare for NftStorageMethod {
     /// not currently supported).
     async fn prepare(
         &self,
-        _sugar_config: &SugarConfig,
+        _case_config: &CaseConfig,
         asset_pairs: &HashMap<isize, AssetPair>,
         asset_indices: Vec<(DataType, &[isize])>,
     ) -> Result<()> {
@@ -161,7 +161,7 @@ impl Uploader for NftStorageMethod {
     /// Upload the data to Nft Storage
     async fn upload(
         &self,
-        _sugar_config: &SugarConfig,
+        _case_config: &CaseConfig,
         cache: &mut Cache,
         data_type: DataType,
         assets: &mut Vec<AssetInfo>,

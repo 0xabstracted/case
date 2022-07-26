@@ -1,10 +1,10 @@
 #!/bin/bash
 #
-# Sugar CLI binary installation script
+# Case CLI binary installation script
 # ------------------------------------
 #
 # The purpose of this script is to automate the download and installation
-# of Sugar CLI binary.
+# of Case CLI binary.
 #
 # The script does a (simple) platform detection, downloads the binary
 # for the detected platform and copies it to a folder in the PATH variable.
@@ -24,7 +24,7 @@ abort_on_error() {
     fi
 }
 
-CYN  "🍬 Sugar CLI binary installation script"
+CYN  "🍬 Case CLI binary installation script"
 echo "---------------------------------------"
 echo ""
 
@@ -38,7 +38,7 @@ case "$PROCESSOR" in
     arm* | aarch* | ppc* )
         if [ "$OS_FLAVOUR" != Darwin ]; then
             echo "Binary for $PROCESSOR architecture is not currently supported using this installer. Please follow the instructions at:"
-            echo "  => $(CYN https://github.com/metaplex-foundation/sugar)"
+            echo "  => $(CYN https://github.com/metaplex-foundation/case)"
             echo ""
             echo "for details on alternate installation methods."
             exit 1
@@ -50,7 +50,7 @@ case "$PROCESSOR" in
         ;;
 esac
  
-BIN="sugar"
+BIN="case"
 VERSION="ubuntu-latest"
 
 if [ "$OS_FLAVOUR" = Darwin ]; then
@@ -73,14 +73,14 @@ echo "$(CYN "1.") 🖥  $(CYN "Downloading distribution")"
 echo ""
 
 # downloads the distribution file
-REMOTE="https://github.com/metaplex-foundation/sugar/releases/latest/download/"
+REMOTE="https://github.com/metaplex-foundation/case/releases/latest/download/"
 curl -L $REMOTE$BIN"-"$DIST --output "$SOURCE/$DIST"
 abort_on_error $?
 
 SIZE=$(wc -c "$SOURCE/$DIST" | grep -oE "[0-9]+" | head -n 1)
 
 if [ $SIZE -eq 0 ]; then
-    RED "Aborting: could not download Sugar distribution"
+    RED "Aborting: could not download Case distribution"
     exit 1
 fi
 
@@ -97,7 +97,7 @@ if [ ! "$(command -v $BIN)" = "" ]; then
     # replace it
     EXISTING="$(which $BIN)"
 
-    echo "Sugar binary was found at:"
+    echo "Case binary was found at:"
     echo "  => $(CYN $EXISTING)"
     echo ""
     echo -n "$(CYN "Replace it? [Y/n]") (default 'n'): "
@@ -140,7 +140,7 @@ else
             echo "  => adding '$TARGET' to 'PATH' variable in '$ENV_FILE'"
             echo "export PATH=\"$HOME/bin:\$PATH\"" >> "$ENV_FILE"
         else
-            echo "  => adding '$TARGET' to 'PATH' variable to execute 'sugar' from any directory."
+            echo "  => adding '$TARGET' to 'PATH' variable to execute 'case' from any directory."
             echo "     - file '$(CYN $ENV_FILE)' was not found"
             echo "" 
             echo -n "$(CYN "Would you like to create '$ENV_FILE'? [Y/n]") (default 'n'): "
@@ -167,7 +167,7 @@ fi
 echo ""
 # sanity check
 if [ "$(command -v $BIN)" = "" ]; then
-    # installation was completed, but sugar is not in the PATH
+    # installation was completed, but case is not in the PATH
     echo "✅ $(GRN "Installation complete:") restart your shell to update 'PATH' variable or type '$TARGET/$BIN' to start using it."
 else
     # success

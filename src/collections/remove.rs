@@ -3,12 +3,12 @@ use std::str::FromStr;
 use anchor_client::solana_sdk::pubkey::Pubkey;
 use anyhow::Result;
 use console::style;
-use mpl_candy_machine::{accounts as nft_accounts, instruction as nft_instruction};
+use tars::{accounts as nft_accounts, instruction as nft_instruction};
 use mpl_token_metadata::{pda::find_collection_authority_account, state::Metadata};
 
 use crate::{
     cache::load_cache,
-    candy_machine::{CANDY_MACHINE_ID, *},
+    tars::{TARS_ID, *},
     common::*,
     pdas::*,
     utils::{assert_correct_authority, spinner_with_style},
@@ -18,59 +18,59 @@ pub struct RemoveCollectionArgs {
     pub keypair: Option<String>,
     pub rpc_url: Option<String>,
     pub cache: String,
-    pub candy_machine: Option<String>,
+    pub tars: Option<String>,
 }
 
 pub fn process_remove_collection(args: RemoveCollectionArgs) -> Result<()> {
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
-    let client = setup_client(&sugar_config)?;
-    let program = client.program(CANDY_MACHINE_ID);
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
+    let client = setup_client(&case_config)?;
+    let program = client.program(TARS_ID);
     let mut cache = Cache::new();
 
-    // the candy machine id specified takes precedence over the one from the cache
-    let candy_machine_id = match args.candy_machine {
-        Some(ref candy_machine_id) => candy_machine_id,
+    // the tars id specified takes precedence over the one from the cache
+    let tars_id = match args.tars {
+        Some(ref tars_id) => tars_id,
         None => {
             cache = load_cache(&args.cache, false)?;
-            &cache.program.candy_machine
+            &cache.program.tars
         }
     };
 
-    let candy_pubkey = match Pubkey::from_str(candy_machine_id) {
-        Ok(candy_pubkey) => candy_pubkey,
+    let tars_pubkey = match Pubkey::from_str(tars_id) {
+        Ok(tars_pubkey) => tars_pubkey,
         Err(_) => {
-            let error = anyhow!("Failed to parse candy machine id: {}", candy_machine_id);
+            let error = anyhow!("Failed to parse tars id: {}", tars_id);
             error!("{:?}", error);
             return Err(error);
         }
     };
 
     println!(
-        "{} {}Loading candy machine",
+        "{} {}Loading tars",
         style("[1/2]").bold().dim(),
         LOOKING_GLASS_EMOJI
     );
-    println!("{} {}", style("Candy machine ID:").bold(), candy_machine_id);
+    println!("{} {}", style("Tars ID:").bold(), tars_id);
 
     let pb = spinner_with_style();
     pb.set_message("Connecting...");
 
-    let candy_machine_state = get_candy_machine_state(&sugar_config, &candy_pubkey)?;
-    let (collection_pda_pubkey, collection_pda) = get_collection_pda(&candy_pubkey, &program)?;
+    let tars_state = get_tars_state(&case_config, &tars_pubkey)?;
+    let (collection_pda_pubkey, collection_pda) = get_collection_pda(&tars_pubkey, &program)?;
     let collection_mint_pubkey = collection_pda.mint;
     let collection_metadata_info = get_metadata_pda(&collection_mint_pubkey, &program)?;
 
     pb.finish_with_message("Done");
 
     assert_correct_authority(
-        &sugar_config.keypair.pubkey(),
-        &candy_machine_state.authority,
+        &case_config.keypair.pubkey(),
+        &tars_state.authority,
     )?;
 
     println!(
-        "\n{} {}Removing collection mint for candy machine",
+        "\n{} {}Removing collection mint for tars",
         style("[2/2]").bold().dim(),
-        CANDY_EMOJI
+        TARS_EMOJI
     );
 
     let pb = spinner_with_style();
@@ -78,16 +78,16 @@ pub fn process_remove_collection(args: RemoveCollectionArgs) -> Result<()> {
 
     let remove_signature = remove_collection(
         &program,
-        &candy_pubkey,
-        &candy_machine_state,
+        &tars_pubkey,
+        &tars_state,
         &collection_pda_pubkey,
         &collection_mint_pubkey,
         &collection_metadata_info,
     )?;
 
-    // If a candy machine id wasn't manually specified we are operating on the candy machine in the cache
+    // If a tars id wasn't manually specified we are operating on the tars in the cache
     // and so need to update the cache file.
-    if args.candy_machine.is_none() {
+    if args.tars.is_none() {
         cache.items.shift_remove("-1");
         cache.program.collection_mint = String::new();
         cache.sync_file()?;
@@ -104,8 +104,8 @@ pub fn process_remove_collection(args: RemoveCollectionArgs) -> Result<()> {
 
 pub fn remove_collection(
     program: &Program,
-    candy_pubkey: &Pubkey,
-    candy_machine_state: &CandyMachine,
+    tars_pubkey: &Pubkey,
+    tars_state: &Tars,
     collection_pda_pubkey: &Pubkey,
     collection_mint_pubkey: &Pubkey,
     collection_metadata_info: &PdaInfo<Metadata>,
@@ -118,22 +118,22 @@ pub fn remove_collection(
     let (collection_metadata_pubkey, collection_metadata) = collection_metadata_info;
 
     if collection_metadata.update_authority != payer {
-        return Err(anyhow!(CustomCandyError::AuthorityMismatch(
+        return Err(anyhow!(CustomTarsError::AuthorityMismatch(
             collection_metadata.update_authority.to_string(),
             payer.to_string()
         )));
     }
 
-    if candy_machine_state.items_redeemed > 0 {
+    if tars_state.items_redeemed > 0 {
         return Err(anyhow!(
-            "You can't modify the Candy Machine collection after items have been minted."
+            "You can't modify the Tars collection after items have been minted."
         ));
     }
 
     let builder = program
         .request()
         .accounts(nft_accounts::RemoveCollection {
-            candy_machine: *candy_pubkey,
+            tars: *tars_pubkey,
             authority: payer,
             collection_pda: *collection_pda_pubkey,
             metadata: *collection_metadata_pubkey,

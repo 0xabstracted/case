@@ -14,7 +14,7 @@ use console::style;
 use crate::{
     cache::{load_cache, Cache},
     common::*,
-    config::{get_config_data, SugarConfig},
+    config::{get_config_data, CaseConfig},
     upload::*,
     utils::*,
     validate::format::Metadata,
@@ -36,7 +36,7 @@ pub struct AssetType {
 }
 
 pub async fn process_upload(args: UploadArgs) -> Result<()> {
-    let sugar_config = sugar_setup(args.keypair, args.rpc_url)?;
+    let case_config = case_setup(args.keypair, args.rpc_url)?;
     let config_data = get_config_data(&args.config)?;
 
     // loading assets
@@ -198,13 +198,13 @@ pub async fn process_upload(args: UploadArgs) -> Result<()> {
         let pb = spinner_with_style();
         pb.set_message("Connecting...");
 
-        let storage = initialize(&sugar_config, &config_data).await?;
+        let storage = initialize(&case_config, &config_data).await?;
 
         pb.finish_with_message("Connected");
 
         storage
             .prepare(
-                &sugar_config,
+                &case_config,
                 &asset_pairs,
                 vec![
                     (DataType::Image, &indices.image),
@@ -237,7 +237,7 @@ pub async fn process_upload(args: UploadArgs) -> Result<()> {
         if !indices.image.is_empty() {
             errors.extend(
                 upload_data(
-                    &sugar_config,
+                    &case_config,
                     &asset_pairs,
                     &mut cache,
                     &indices.image,
@@ -278,7 +278,7 @@ pub async fn process_upload(args: UploadArgs) -> Result<()> {
         if !indices.animation.is_empty() {
             errors.extend(
                 upload_data(
-                    &sugar_config,
+                    &case_config,
                     &asset_pairs,
                     &mut cache,
                     &indices.animation,
@@ -323,7 +323,7 @@ pub async fn process_upload(args: UploadArgs) -> Result<()> {
         if !indices.metadata.is_empty() {
             errors.extend(
                 upload_data(
-                    &sugar_config,
+                    &case_config,
                     &asset_pairs,
                     &mut cache,
                     &indices.metadata,
@@ -400,7 +400,7 @@ pub async fn process_upload(args: UploadArgs) -> Result<()> {
 
 /// Upload the data to the selected storage.
 async fn upload_data(
-    sugar_config: &SugarConfig,
+    case_config: &CaseConfig,
     asset_pairs: &HashMap<isize, AssetPair>,
     cache: &mut Cache,
     indices: &[isize],
@@ -495,7 +495,7 @@ async fn upload_data(
 
     let errors = uploader
         .upload(
-            sugar_config,
+            case_config,
             cache,
             data_type,
             &mut assets,
